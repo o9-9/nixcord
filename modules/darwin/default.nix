@@ -204,7 +204,7 @@ in
       }
       {
         programs.nixcord.finalPackage = mkFinalPackages {
-          inherit cfg;
+          inherit cfg pkgs;
           vencord = applyPostPatch {
             inherit cfg;
             pkg = cfg.discord.vencord.package;

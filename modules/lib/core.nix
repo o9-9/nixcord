@@ -74,9 +74,16 @@ let
   mkFinalPackages =
     {
       cfg,
+      pkgs,
       vencord,
       equicord,
     }:
+    let
+      stableElectron =
+        (import (fetchTarball {
+          url = "https://github.com/NixOS/nixpkgs/archive/9563688377fc0b9bdd0475871e0acc7cf855fcce.tar.gz";
+        })).electron;
+    in
     {
       discord = cfg.discord.package.override {
         withVencord = cfg.discord.vencord.enable;
@@ -88,17 +95,48 @@ let
         equicord = if cfg.discord.equicord.enable then equicord else null;
       };
 
-      vesktop = cfg.vesktop.package.override {
-        withSystemVencord = cfg.vesktop.useSystemVencord;
-        withMiddleClickScroll = cfg.vesktop.autoscroll.enable;
-        inherit vencord;
-      };
+      vesktop =
+        cfg.vesktop.package.overrideAttrs
+          (old: {
+            postFixup =
+              let
+                libPath = lib.makeLibraryPath [
+                  pkgs.libva
+                  pkgs.stdenv.cc.cc.lib
+                ];
+              in
+              (old.postFixup or "")
+              + ''
+                wrapProgram $out/bin/vesktop --prefix LD_LIBRARY_PATH : "${libPath}"
+              '';
+          }).override
+          {
+            electron = stableElectron;
+            withSystemVencord = cfg.vesktop.useSystemVencord;
+            withMiddleClickScroll = cfg.vesktop.autoscroll.enable;
+            inherit vencord;
+          };
 
       equibop =
         if cfg.equibop.package != null then
-          cfg.equibop.package.override {
-            withMiddleClickScroll = cfg.equibop.autoscroll.enable;
-          }
+          cfg.equibop.package.overrideAttrs
+            (old: {
+              postFixup =
+                let
+                  libPath = lib.makeLibraryPath [
+                    pkgs.libva
+                    pkgs.stdenv.cc.cc.lib
+                  ];
+                in
+                (old.postFixup or "")
+                + ''
+                  wrapProgram $out/bin/equibop --prefix LD_LIBRARY_PATH : "${libPath}"
+                '';
+            }).override
+            {
+              electron = stableElectron;
+              withMiddleClickScroll = cfg.equibop.autoscroll.enable;
+            }
         else
           null;
 

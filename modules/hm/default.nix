@@ -135,7 +135,7 @@ in
       }
       {
         programs.nixcord.finalPackage = mkFinalPackages {
-          inherit cfg;
+          inherit cfg pkgs;
           inherit vencord equicord;
         };
 
