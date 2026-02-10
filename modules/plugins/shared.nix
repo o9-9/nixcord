@@ -59,7 +59,7 @@ in
     };
     apiKey = mkOption {
       default = null;
-      description = "Custom Last.fm API key. You shouldn't need to set this";
+      description = "Custom Last.fm API key. Not required but highly recommended to avoid rate limiting with our shared key";
       type = types.nullOr types.str;
     };
     clickableLinks = mkOption {
@@ -136,7 +136,7 @@ in
     enable = mkEnableOption "Shows mutual group dms in profiles (Shared between Vencord and Equicord)";
   };
   OnePingPerDM = {
-    enable = mkEnableOption "If unread messages are sent by a user in DMs multiple times, you'll only receive one audio ping. Read the messages to reset the limit (Shared between Vencord and Equicord)";
+    enable = mkEnableOption "If unread messages are sent by a user in DMs multiple times, you'll only receive one audio ping. (Shared between Vencord and Equicord)";
     allowEveryone = mkOption {
       default = false;
       description = "Receive audio pings for @everyone and @here in group DMs";
@@ -174,6 +174,11 @@ in
       description = "Allow uncategorised DMs section to be collapsable";
       type = types.bool;
     };
+    dmSectionCollapsed = mkOption {
+      default = false;
+      description = "Collapse DM section";
+      type = types.bool;
+    };
     pinOrder = mkOption {
       default = 0;
       description = ''
@@ -192,6 +197,34 @@ in
   };
   ReviewDB = {
     enable = mkEnableOption "Review other users (Adds a new settings to profiles) (Shared between Vencord and Equicord)";
+    authorize = mkOption {
+      default = { };
+      type = types.attrs;
+    };
+    buttons = mkOption {
+      default = { };
+      type = types.attrs;
+    };
+    hideBlockedUsers = mkOption {
+      default = true;
+      description = "Hide reviews from blocked users";
+      type = types.bool;
+    };
+    hideTimestamps = mkOption {
+      default = false;
+      description = "Hide timestamps on reviews";
+      type = types.bool;
+    };
+    notifyReviews = mkOption {
+      default = true;
+      description = "Notify about new reviews on startup";
+      type = types.bool;
+    };
+    showWarning = mkOption {
+      default = true;
+      description = "Display warning to be respectful at the top of the reviews list";
+      type = types.bool;
+    };
   };
   USRBG = {
     enable = mkEnableOption "Displays user banners from USRBG, allowing anyone to get a banner without Nitro (Shared between Vencord and Equicord)";
@@ -522,6 +555,11 @@ in
   };
   betterGifPicker = {
     enable = mkEnableOption "Makes the gif picker open the favourite category by default (Shared between Vencord and Equicord)";
+    keepOpen = mkOption {
+      default = false;
+      description = "Keeps the gif picker open after selecting a gif";
+      type = types.bool;
+    };
   };
   betterNotesBox = {
     enable = mkEnableOption "Hide notes or disable spellcheck (Configure in settings!!) (Shared between Vencord and Equicord)";
@@ -599,14 +637,44 @@ in
     enable = mkEnableOption "This plugin allows you to enlarge stream previews (Shared between Vencord and Equicord)";
   };
   callTimer = {
-    enable = mkEnableOption "Adds a timer to vcs (Shared between Vencord and Equicord)";
+    enable = mkEnableOption "Add call timers for all users in voice channels and in the connection status. (Shared between Vencord and Equicord)";
+    allCallTimers = mkOption {
+      default = false;
+      description = "Add call timer to all users in a server voice channel (restart required)";
+      type = types.bool;
+    };
     format = mkOption {
       default = "stopwatch";
-      description = "The timer format. This can be any valid moment.js format";
+      description = "Compact or human readable format:";
       type = types.enum [
         "stopwatch"
         "human"
       ];
+    };
+    showRoleColor = mkOption {
+      default = false;
+      description = "Show the user's role color (if this plugin in enabled)";
+      type = types.bool;
+    };
+    showSeconds = mkOption {
+      default = false;
+      description = "Show seconds in the timer";
+      type = types.bool;
+    };
+    showWithoutHover = mkOption {
+      default = false;
+      description = "Always show the timer without needing to hover (restart required)";
+      type = types.bool;
+    };
+    trackSelf = mkOption {
+      default = false;
+      description = "Also track yourself";
+      type = types.bool;
+    };
+    watchLargeGuilds = mkOption {
+      default = false;
+      description = "Track users in large guilds. This may cause lag if you're in a lot of large guilds with active voice users. Tested with up to 2000 active voice users with no issues. (restart required)";
+      type = types.bool;
     };
   };
   clientTheme = {
@@ -648,7 +716,7 @@ in
     };
     whitelistedLoggers = mkOption {
       default = "GatewaySocket; Routing/Utils";
-      description = "Semi colon separated list of loggers to allow even if others are hidden";
+      description = "Semicolon (;) separated list of loggers to allow even if others are hidden";
       type = types.str;
     };
   };
@@ -739,6 +807,20 @@ in
   };
   decor = {
     enable = mkEnableOption "Create and use your own custom avatar decorations, or pick your favorite from the presets. (Shared between Vencord and Equicord)";
+    agreedToGuidelines = mkOption {
+      default = false;
+      description = "Agreed to guidelines";
+      type = types.bool;
+    };
+    baseUrl = mkOption {
+      default = "https://decor.fieryflames.dev";
+      description = "Decor api url";
+      type = types.str;
+    };
+    changeDecoration = mkOption {
+      default = { };
+      type = types.attrs;
+    };
   };
   devCompanion = {
     enable = mkEnableOption "Dev Companion Plugin. Please report anything not working or being weird (most likely its a bug) to sadan, either ping or dm, thanks! (Shared between Vencord and Equicord)";
@@ -871,7 +953,12 @@ in
     enable = mkEnableOption "Removes the gap between codeblocks and text below it (Shared between Vencord and Equicord)";
   };
   fixImagesQuality = {
-    enable = mkEnableOption "Improves quality of images in chat by forcing png format (Shared between Vencord and Equicord)";
+    enable = mkEnableOption "Improves quality of images by loading them at their original resolution (Shared between Vencord and Equicord)";
+    originalImagesInChat = mkOption {
+      default = false;
+      description = "Also load the original image in Chat. WARNING: Read the caveats above";
+      type = types.bool;
+    };
   };
   fixSpotifyEmbeds = {
     enable = mkEnableOption "Fixes spotify embeds being incredibly loud by letting you customise the volume (Shared between Vencord and Equicord)";
@@ -901,6 +988,14 @@ in
   };
   gameActivityToggle = {
     enable = mkEnableOption "Adds a button next to the mic and deafen button to toggle game activity. (Shared between Vencord and Equicord)";
+    location = mkOption {
+      default = "PANEL";
+      description = "Where to show the game activity toggle button";
+      type = types.enum [
+        "PANEL"
+        "TOOLBOX"
+      ];
+    };
     oldIcon = mkOption {
       default = false;
       description = "Use the old icon style before Discord icon redesign";
@@ -1116,25 +1211,149 @@ in
     };
   };
   messageClickActions = {
-    enable = mkEnableOption "Hold Backspace and click to delete, double click to edit/reply (Shared between Vencord and Equicord)";
-    enableDeleteOnClick = mkOption {
+    enable = mkEnableOption "Customize click actions on messages. (Shared between Vencord and Equicord)";
+    clickTimeout = mkOption {
+      default = 300;
+      description = "Timeout to distinguish double/triple clicks (ms)";
+      type = types.int;
+    };
+    deferDoubleClickForTriple = mkOption {
       default = true;
-      description = "Enable delete on click while holding backspace";
+      description = "Delay double-click to allow triple-click actions (disables triple-click when off)";
       type = types.bool;
     };
-    enableDoubleClickToEdit = mkOption {
-      default = true;
-      description = "Enable double click to edit";
-      type = types.bool;
-    };
-    enableDoubleClickToReply = mkOption {
-      default = true;
-      description = "Enable double click to reply";
-      type = types.bool;
-    };
-    requireModifier = mkOption {
+    disableInDms = mkOption {
       default = false;
-      description = "Only do double click actions when shift/ctrl is held";
+      description = "Disable all click actions in direct messages";
+      type = types.bool;
+    };
+    disableInSystemDms = mkOption {
+      default = true;
+      description = "Disable all click actions in system DMs";
+      type = types.bool;
+    };
+    doubleClickAction = mkOption {
+      default = "EDIT";
+      description = "Action on double-click (your messages)";
+      type = types.enum [
+        "NONE"
+        "DELETE"
+        "REPLY"
+        "EDIT"
+        "QUOTE"
+        "COPY_CONTENT"
+        "COPY_LINK"
+        "COPY_ID"
+        "COPY_USER_ID"
+        "REACT"
+        "PIN"
+      ];
+    };
+    doubleClickHoldThreshold = mkOption {
+      default = 150;
+      description = "Max hold time for double-click actions (ms). Holding longer allows text selection";
+      type = types.int;
+    };
+    doubleClickModifier = mkOption {
+      default = "NONE";
+      description = "Modifier required for double-click action";
+      type = types.enum [
+        "NONE"
+        "SHIFT"
+        "CTRL"
+        "ALT"
+      ];
+    };
+    doubleClickOthersAction = mkOption {
+      default = "REPLY";
+      description = "Action on double-click (others' messages)";
+      type = types.enum [
+        "NONE"
+        "DELETE"
+        "REPLY"
+        "QUOTE"
+        "COPY_CONTENT"
+        "COPY_LINK"
+        "COPY_ID"
+        "COPY_USER_ID"
+        "REACT"
+        "PIN"
+      ];
+    };
+    quoteWithReply = mkOption {
+      default = true;
+      description = "When quoting, also reply to the message";
+      type = types.bool;
+    };
+    reactEmoji = mkOption {
+      default = "💀";
+      description = "Emoji to use for react actions";
+      type = types.str;
+    };
+    selectionHoldTimeout = mkOption {
+      default = 300;
+      description = "Timeout to allow text selection (ms)";
+      type = types.int;
+    };
+    singleClickAction = mkOption {
+      default = "DELETE";
+      description = "Action on single click with modifier";
+      type = types.enum [
+        "NONE"
+        "DELETE"
+        "COPY_LINK"
+        "COPY_ID"
+        "COPY_CONTENT"
+        "COPY_USER_ID"
+        "EDIT"
+        "REPLY"
+        "REACT"
+        "OPEN_THREAD"
+        "OPEN_TAB"
+      ];
+    };
+    singleClickModifier = mkOption {
+      default = "BACKSPACE";
+      description = "Modifier required for single click action";
+      type = types.enum [
+        "BACKSPACE"
+        "DELETE"
+        "NONE"
+        "SHIFT"
+        "CTRL"
+        "ALT"
+      ];
+    };
+    tripleClickAction = mkOption {
+      default = "REACT";
+      description = "Action on triple-click";
+      type = types.enum [
+        "NONE"
+        "DELETE"
+        "COPY_LINK"
+        "COPY_ID"
+        "COPY_CONTENT"
+        "COPY_USER_ID"
+        "EDIT"
+        "REPLY"
+        "REACT"
+        "OPEN_THREAD"
+        "OPEN_TAB"
+      ];
+    };
+    tripleClickModifier = mkOption {
+      default = "NONE";
+      description = "Modifier required for triple-click action";
+      type = types.enum [
+        "NONE"
+        "SHIFT"
+        "CTRL"
+        "ALT"
+      ];
+    };
+    useSelectionForQuote = mkOption {
+      default = false;
+      description = "When quoting, use selected text if available";
       type = types.bool;
     };
   };
@@ -1271,6 +1490,39 @@ in
     tagsList = mkOption {
       default = { };
       type = types.attrs;
+    };
+  };
+  moreQuickReactions = {
+    enable = mkEnableOption "Improves the quick react buttons in the message context menu. (Shared between Vencord and Equicord)";
+    columns = mkOption {
+      default = 4.0;
+      description = "Columns of quick reactions to display";
+      type = types.float;
+    };
+    compactMode = mkOption {
+      default = false;
+      description = "Scales the buttons to 75% of their original scale, whilst increasing the inner emoji to 125% scale. Emojis will be 93.75% of the original size. Recommended to have a minimum of 5 columns";
+      type = types.bool;
+    };
+    frequentEmojis = mkOption {
+      default = true;
+      description = "Use frequently used emojis instead of favourite emojis (restart required)";
+      type = types.bool;
+    };
+    reactionCount = mkOption {
+      default = 5;
+      description = "Number of reactions (0-42)";
+      type = types.int;
+    };
+    rows = mkOption {
+      default = 2.0;
+      description = "Rows of quick reactions to display";
+      type = types.float;
+    };
+    scroll = mkOption {
+      default = true;
+      description = "Enable scrolling the list of emojis";
+      type = types.bool;
     };
   };
   newGuildSettings = {
@@ -1412,7 +1664,7 @@ in
     };
     roleList = mkOption {
       default = "1234567890123445,1234567890123445";
-      description = "List of roles to allow or exempt pings for (separated by commas or spaces)";
+      description = "List of role ids to allow or exempt pings for (separated by commas or spaces)";
       type = types.str;
     };
     shouldPingListed = mkOption {
@@ -1422,7 +1674,7 @@ in
     };
     userList = mkOption {
       default = "1234567890123445,1234567890123445";
-      description = "List of users to allow or exempt pings for (separated by commas or spaces)";
+      description = "List of user ids to allow or exempt pings for (separated by commas or spaces)";
       type = types.str;
     };
   };
@@ -1447,15 +1699,75 @@ in
   noUnblockToJump = {
     enable = mkEnableOption "Allows you to jump to messages of blocked or ignored users and likely spammers without unblocking them (Shared between Vencord and Equicord)";
   };
-  normalizeMessageLinks = {
-    enable = mkEnableOption "Strip canary/ptb from message links (Shared between Vencord and Equicord)";
-  };
   notificationVolume = {
     enable = mkEnableOption "Save your ears and set a separate volume for notifications and in-app sounds (Shared between Vencord and Equicord)";
     notificationVolume = mkOption {
       default = 100.0;
       description = "Notification volume";
       type = types.float;
+    };
+  };
+  oneko = {
+    enable = mkEnableOption "only a slightly annoying plugin (Shared between Vencord and Equicord)";
+    buddy = mkOption {
+      default = "oneko";
+      description = "Pick a cursor buddy";
+      type = types.enum [
+        "oneko"
+        "fathorse"
+      ];
+    };
+    fade = mkOption {
+      default = true;
+      description = "If the horse should fade when the cursor is near";
+      type = types.bool;
+    };
+    fathorseSection = mkOption {
+      default = { };
+      type = types.attrs;
+    };
+    fps = mkOption {
+      default = 24;
+      description = "Framerate of your buddy";
+      type = types.int;
+    };
+    freeroam = mkOption {
+      default = true;
+      description = "If the horse should roam freely when idle";
+      type = types.bool;
+    };
+    furColor = mkOption {
+      default = "#FFFFFF";
+      description = "Fur hex color for Oneko";
+      type = types.str;
+    };
+    onekoColorSettings = mkOption {
+      default = { };
+      type = types.attrs;
+    };
+    onekoSection = mkOption {
+      default = { };
+      type = types.attrs;
+    };
+    outlineColor = mkOption {
+      default = "#000000";
+      description = "Outline hex color for Oneko";
+      type = types.str;
+    };
+    shake = mkOption {
+      default = false;
+      description = "If the horse should shake the window when it's walking";
+      type = types.bool;
+    };
+    size = mkOption {
+      default = 120;
+      description = "Size of the fatass horse";
+      type = types.int;
+    };
+    speed = mkOption {
+      default = 10;
+      description = "Speed of your buddy";
+      type = types.int;
     };
   };
   openInApp = {
@@ -1763,64 +2075,70 @@ in
       type = types.nullOr types.str;
     };
     theme = mkOption {
-      default = "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/dark-plus.json";
+      default = "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/dark-plus.json";
       description = "Default themes";
       type = types.enum [
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/dark-plus.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/dark-plus.json"
         "https://raw.githubusercontent.com/millsp/material-candy/master/material-candy.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/andromeeda.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/aurora-x.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/ayu-dark.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/catppuccin-latte.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/catppuccin-frappe.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/catppuccin-macchiato.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/catppuccin-mocha.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/dracula-soft.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/dracula.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/everforest-dark.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/everforest-light.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/github-dark-default.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/github-dark-dimmed.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/github-dark-high-contrast.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/github-dark.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/github-light-default.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/github-light-high-contrast.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/github-light.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/houston.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/kanagawa-dragon.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/kanagawa-lotus.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/kanagawa-wave.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/laserwave.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/light-plus.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/material-theme-darker.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/material-theme.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/material-theme-lighter.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/material-theme-ocean.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/material-theme-palenight.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/min-dark.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/min-light.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/monokai.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/night-owl.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/nord.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/one-dark-pro.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/one-light.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/plastic.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/poimandres.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/red.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/rose-pine-dawn.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/rose-pine-moon.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/rose-pine.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/slack-dark.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/slack-ochin.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/snazzy-light.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/solarized-dark.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/solarized-light.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/synthwave-84.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/tokyo-night.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/vesper.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/vitesse-black.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/vitesse-dark.json"
-        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/2d87559c7601a928b9f7e0f0dda243d2fb6d4499/packages/tm-themes/themes/vitesse-light.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/andromeeda.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/aurora-x.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/ayu-dark.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/catppuccin-latte.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/catppuccin-frappe.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/catppuccin-macchiato.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/catppuccin-mocha.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/dracula-soft.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/dracula.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/everforest-dark.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/everforest-light.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/github-dark-default.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/github-dark-dimmed.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/github-dark-high-contrast.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/github-dark.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/github-light-default.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/github-light-high-contrast.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/github-light.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/gruvbox-dark-hard.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/gruvbox-dark-medium.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/gruvbox-dark-soft.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/gruvbox-light-hard.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/gruvbox-light-medium.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/gruvbox-light-soft.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/houston.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/kanagawa-dragon.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/kanagawa-lotus.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/kanagawa-wave.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/laserwave.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/light-plus.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/material-theme-darker.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/material-theme.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/material-theme-lighter.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/material-theme-ocean.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/material-theme-palenight.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/min-dark.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/min-light.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/monokai.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/night-owl.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/nord.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/one-dark-pro.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/one-light.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/plastic.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/poimandres.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/red.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/rose-pine-dawn.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/rose-pine-moon.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/rose-pine.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/slack-dark.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/slack-ochin.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/snazzy-light.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/solarized-dark.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/solarized-light.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/synthwave-84.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/tokyo-night.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/vesper.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/vitesse-black.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/vitesse-dark.json"
+        "https://raw.githubusercontent.com/shikijs/textmate-grammars-themes/bc5436518111d87ea58eb56d97b3f9bec30e6b83/packages/tm-themes/themes/vitesse-light.json"
       ];
     };
     tryHljs = mkOption {
@@ -1913,11 +2231,16 @@ in
     enable = mkEnableOption "Displays various hidden & moderator-only things regardless of permissions. (Shared between Vencord and Equicord)";
   };
   showMeYourName = {
-    enable = mkEnableOption "Display any permutation of nicknames, display names, and usernames in chat. (Shared between Vencord and Equicord)";
+    enable = mkEnableOption "Display any permutation of custom nicknames, friend nicknames, server nicknames, display names, and usernames in chat. (Shared between Vencord and Equicord)";
     animateGradients = mkOption {
       default = false;
-      description = ''For the second, third, and fourth names, if the role has a gradient, animate it. This is disabled by "Ignore Gradients" and reduced motion.'';
+      description = ''For the non-primary names, if the role has a gradient, animate it. This is disabled by "Ignore Gradients" and reduced motion.'';
       type = types.bool;
+    };
+    customNameColor = mkOption {
+      default = "Role-25";
+      description = ''The color to use for the custom name you assigned a user if it's not the first displayed. Leave blank for default. Accepts hex(a), rgb(a), or hsl(a) input. Use "Role" to follow the user's top role color. Use "Role+-#" to adjust the brightness by that percentage (ex: "Role+15")'';
+      type = types.str;
     };
     discriminators = mkOption {
       default = true;
@@ -1941,17 +2264,17 @@ in
     };
     ignoreFonts = mkOption {
       default = false;
-      description = "For the second, third, and fourth names, use GG SANS regardless of the user's custom font.";
+      description = "For the non-primary names, use Discord's default fonts regardless of the user's custom nitro font.";
       type = types.bool;
     };
     ignoreGradients = mkOption {
       default = true;
-      description = "For the second, third, and fourth names, if the role has a gradient, ignore it in favor of the value below.";
+      description = "For the non-primary names, if the role has a gradient, ignore it in favor of the color set below.";
       type = types.bool;
     };
     includedNames = mkOption {
-      default = "{friend, nick} [{display}] (@{user})";
-      description = "The order to display usernames, display names, nicknames, and friend names. Use the following placeholders: {user}, {display}, {nick}, {friend}. You can provide multiple name options to use as fallbacks if one is unavailable by separating them with commas as such: {friend, nick, display}. You can have up to three prefixes and three suffixes per name.";
+      default = "{custom, friend, nick} [{display}] (@{user})";
+      description = "The order to display usernames, display names, nicknames, friend names, and custom names. Use the following placeholders: {user}, {display}, {nick}, {friend}, {custom}. You can provide multiple name options to use as fallbacks if one is unavailable by separating them with commas as such: {custom, friend, nick}. You can have up to three prefixes and three suffixes per name.";
       type = types.str;
     };
     memberList = mkOption {
@@ -1997,6 +2320,11 @@ in
     replies = mkOption {
       default = true;
       description = "Display custom name format in replies.";
+      type = types.bool;
+    };
+    triggerNameRerender = mkOption {
+      default = false;
+      description = "Trigger a name rerender by toggling this setting.";
       type = types.bool;
     };
     truncateAllNamesWithStreamerMode = mkOption {
@@ -2208,6 +2536,26 @@ in
       example = "Get your API key from https://deepl.com/your-account";
       type = types.str;
     };
+    receivedInput = mkOption {
+      default = "auto";
+      description = "Language that received messages should be translated from";
+      type = types.str;
+    };
+    receivedOutput = mkOption {
+      default = "en";
+      description = "Language that received messages should be translated to";
+      type = types.str;
+    };
+    sentInput = mkOption {
+      default = "auto";
+      description = "Language that your own messages should be translated from";
+      type = types.str;
+    };
+    sentOutput = mkOption {
+      default = "en";
+      description = "Language that your own messages should be translated to";
+      type = types.str;
+    };
     service = mkOption {
       default = "google";
       type = types.enum [
@@ -2219,11 +2567,6 @@ in
     showAutoTranslateTooltip = mkOption {
       default = true;
       description = "Show a tooltip on the ChatBar button whenever a message is automatically translated";
-      type = types.bool;
-    };
-    showChatBarButton = mkOption {
-      default = true;
-      description = "Show translate button in chat bar";
       type = types.bool;
     };
   };
@@ -2267,6 +2610,11 @@ in
     alternativeFormatting = mkOption {
       default = true;
       description = "Show a more useful message when several users are typing";
+      type = types.bool;
+    };
+    amITyping = mkOption {
+      default = false;
+      description = "Shows you if other people can see you typing (restart required)";
       type = types.bool;
     };
     showAvatars = mkOption {

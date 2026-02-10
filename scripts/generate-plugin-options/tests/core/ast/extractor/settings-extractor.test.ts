@@ -1,5 +1,5 @@
-import { describe, test, expect } from 'vitest';
-import { Project, SyntaxKind, ModuleKind } from 'ts-morph';
+import { describe, expect, test } from 'vitest';
+import { ModuleKind, Project, SyntaxKind } from 'ts-morph';
 import {
   extractSettingsFromCall,
   extractSettingsFromObject,
@@ -302,7 +302,7 @@ describe('extractSettingsFromCall()', () => {
     }
   });
 
-  test('filters hidden settings', () => {
+  test('preserves hidden settings', () => {
     const project = createProject();
     const sourceFile = project.createSourceFile(
       'test.ts',
@@ -326,7 +326,8 @@ describe('extractSettingsFromCall()', () => {
     const program = project.getProgram();
     const result = extractSettingsFromCall(callExpr, checker, program);
     expect(result.visible).toBeDefined();
-    expect(result.hidden).toBeUndefined();
+    expect(result.hidden).toBeDefined();
+    expect(result.hidden.hidden).toBe(true);
   });
 
   test('handles restart required suffix', () => {
@@ -791,7 +792,7 @@ describe('extractSettingsFromObject()', () => {
     }
   });
 
-  test('filters hidden at all levels', () => {
+  test('preserves hidden settings at all levels', () => {
     const project = createProject();
     const sourceFile = project.createSourceFile(
       'test.ts',
@@ -814,7 +815,8 @@ describe('extractSettingsFromObject()', () => {
     const program = project.getProgram();
     const result = extractSettingsFromObject(objLiteral, checker, program);
     expect(result.visible).toBeDefined();
-    expect(result.hidden).toBeUndefined();
+    expect(result.hidden).toBeDefined();
+    expect(result.hidden.hidden).toBe(true);
   });
 
   test('handles restart required in nested extraction', () => {

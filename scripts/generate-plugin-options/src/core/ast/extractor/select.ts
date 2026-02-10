@@ -843,6 +843,13 @@ export function extractSelectOptions(
 
   const initUnwrapped = unwrapNode(initializer);
 
+  if (initUnwrapped.getKind() === SyntaxKind.Identifier) {
+    const resolvedInit = resolveIdentifierInitializerNode(initUnwrapped, checker);
+    if (resolvedInit.isJust) {
+      return extractOptionsFromArrayLiteral(resolvedInit.value, checker);
+    }
+  }
+
   // Array.from() is a common pattern for converting array-like objects to arrays
   // We check this first because it's distinct from map() patterns and needs
   // different handling
@@ -1166,6 +1173,13 @@ export function extractSelectDefault(
   }
 
   const initUnwrapped = unwrapNode(initializer);
+
+  if (initUnwrapped.getKind() === SyntaxKind.Identifier) {
+    const resolvedInit = resolveIdentifierInitializerNode(initUnwrapped, checker);
+    if (resolvedInit.isJust) {
+      return extractDefaultFromArrayLiteral(resolvedInit.value, checker);
+    }
+  }
 
   // Try call expression patterns first (map, Object.keys, etc.)
   const callResult = match(initUnwrapped.getKind())

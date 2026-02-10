@@ -99,8 +99,7 @@ function buildPluginSetting(
 export function extractSettingsFromPropertyIterable(
   properties: Iterable<PropertyAssignment>,
   checker: TypeChecker,
-  program: Program,
-  skipHiddenCheck: boolean = false
+  program: Program
 ): Record<string, PluginSetting | PluginConfig> {
   const settings: Record<string, PluginSetting | PluginConfig> = {};
 
@@ -116,13 +115,6 @@ export function extractSettingsFromPropertyIterable(
 
     if (valueObj.isNothing) continue;
     const valueObjValue = valueObj.value;
-
-    // `extractSettingsFromCall` already hides `hidden: true` entries in a later pass so we skip the
-    // check for that caller only; literal extraction still needs to filter them right here
-    if (!skipHiddenCheck) {
-      const hidden = extractBooleanProperty(valueObjValue, HIDDEN_PROPERTY);
-      if (hidden.isJust && hidden.value) continue;
-    }
 
     // Navigator gives us a reliable stream of nested properties even when the plugin spreads other
     // objects in, so we lean on it before deciding whether this entry is a group or a leaf setting
@@ -143,8 +135,7 @@ export function extractSettingsFromPropertyIterable(
       const nestedSettings = extractSettingsFromPropertyIterable(
         nestedProperties,
         checker,
-        program,
-        false
+        program
       );
       settings[key] = {
         name: key,
@@ -152,7 +143,6 @@ export function extractSettingsFromPropertyIterable(
       } as PluginConfig;
     } else {
       const props = extractSettingProperties(valueObjValue, checker);
-      if (props.hidden.isJust && props.hidden.value) continue;
 
       const optionsResult = extractSelectOptions(valueObjValue, checker);
       const extractedOptions = optionsResult.isOk ? optionsResult.value.values : undefined;

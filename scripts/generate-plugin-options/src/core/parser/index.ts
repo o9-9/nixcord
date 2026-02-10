@@ -26,7 +26,12 @@ import { findDefinePluginSettings } from '../ast/navigator/plugin-navigator.js';
 import { extractSettingsFromCall } from '../ast/extractor/settings-extractor.js';
 import { CLI_CONFIG } from '../../shared/config.js';
 
-const PLUGIN_SOURCE_FILE_PATTERNS = ['index.tsx', 'index.ts', 'settings.ts'] as const;
+const PLUGIN_SOURCE_FILE_PATTERNS = [
+  'index.tsx',
+  'index.ts',
+  'settings.ts',
+  'settings.tsx',
+] as const;
 const TYPES_FILE_PATH = 'src/utils/types.ts';
 const DISCORD_ENUMS_DIR = 'packages/discord-types/enums';
 const TSCONFIG_FILE_NAME = 'tsconfig.json';
@@ -173,14 +178,26 @@ async function parseSinglePlugin(
   let settingsCall = findDefinePluginSettings(sourceFile);
 
   if (settingsCall.isNothing) {
-    const settingsPath = normalize(join(pluginPath, 'settings.ts'));
-    const pathExists = await fse.pathExists(settingsPath);
-    settingsCall = match(pathExists)
-      .with(true, () => {
-        const settingsFile = project.addSourceFileAtPath(settingsPath);
+    const settingsPathTs = normalize(join(pluginPath, 'settings.ts'));
+    const settingsPathTsx = normalize(join(pluginPath, 'settings.tsx'));
+    const [pathExistsTs, pathExistsTsx] = await Promise.all([
+      fse.pathExists(settingsPathTs),
+      fse.pathExists(settingsPathTsx),
+    ]);
+    settingsCall = match([pathExistsTs, pathExistsTsx])
+      .with([false, false], () => Maybe.nothing<CallExpression>())
+      .with([true, false], () => {
+        const settingsFile = project.addSourceFileAtPath(settingsPathTs);
         return findDefinePluginSettings(settingsFile);
       })
-      .with(false, () => Maybe.nothing<CallExpression>())
+      .with([false, true], () => {
+        const settingsFile = project.addSourceFileAtPath(settingsPathTsx);
+        return findDefinePluginSettings(settingsFile);
+      })
+      .with([true, true], () => {
+        const settingsFile = project.addSourceFileAtPath(settingsPathTs);
+        return findDefinePluginSettings(settingsFile);
+      })
       .exhaustive();
   }
 
