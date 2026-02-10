@@ -592,28 +592,34 @@ in
     };
   };
 
-  finalPackage = {
-    discord = mkOption {
-      type = with types; package;
-      readOnly = true;
-      description = "The final discord package that is created";
-    };
+  finalPackage = mkOption {
+    type = types.submodule {
+      options = {
+        discord = mkOption {
+          type = types.package;
+          readOnly = true;
+          description = "The final discord package that is created";
+        };
 
-    vesktop = mkOption {
-      type = with types; package;
-      readOnly = true;
-      description = "The final vesktop package that is created";
-    };
-    equibop = mkOption {
-      type = with types; nullOr package;
-      readOnly = true;
-      description = "The final equibop package that is created (null if package is not provided)";
-    };
+        vesktop = mkOption {
+          type = types.package;
+          readOnly = true;
+          description = "The final vesktop package that is created";
+        };
+        equibop = mkOption {
+          type = types.nullOr types.package;
+          readOnly = true;
+          description = "The final equibop package that is created (null if package is not provided)";
+        };
 
-    dorion = mkOption {
-      type = with types; package;
-      readOnly = true;
-      description = "The final dorion package that is created";
+        dorion = mkOption {
+          type = types.package;
+          readOnly = true;
+          description = "The final dorion package that is created";
+        };
+      };
     };
+    readOnly = true;
+    description = "Final packages created by nixcord";
   };
 }
